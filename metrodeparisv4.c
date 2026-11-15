@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #define TAM 14
 #define MIN_POR_KM 2
@@ -57,7 +56,7 @@ static const float distancias_diretas[TAM][TAM] = {
   {29.8, 21.8, 16.6, 15.4, 17.9, 18.2, 15.6, 27.6, 26.6, 21.2, 35.5, 33.6, 5.1,     0}
 };
 
-typedef struct No* cel;
+typedef struct No *cel;
 typedef struct No {
   int estacao;
   int linha;
@@ -85,7 +84,7 @@ float valor_matriz(const float matriz[TAM][TAM], int a, int b) {
 }
 
 Fila* criar_fila() {
-  Fila* fila = (Fila*)malloc(sizeof(Fila));
+  Fila *fila = (Fila*)malloc(sizeof(Fila));
   fila->inicio = (cel)malloc(sizeof(No));
   fila->inicio->prox = NULL;
   fila->fim = fila->inicio;
@@ -160,13 +159,9 @@ No* a_estrela(int origem, int destino) {
   float h = valor_matriz(distancias_diretas, origem, destino) * MIN_POR_KM;
 
   No *estacao_origem = (No*)malloc(sizeof(No));
-  if(estacao_origem){     
-    *estacao_origem = (No){origem, 0, h, 0, h, NULL, NULL}; //preenche os campos do no de uma vez
-  } else {
-    printf("Erro ao alocar memoria.\n");
-  }
+  *estacao_origem = (No){origem, 0, h, 0, h, NULL, NULL}; //preenche os campos do no de uma vez
 
-  Fila* lista_aberta = criar_fila(); //estacoes a serem analisadas
+  Fila *lista_aberta = criar_fila(); //estacoes a serem analisadas
   inserir_fila(lista_aberta, estacao_origem);
 
   int lista_fechada[TAM]; //estacoes ja analisadas
@@ -176,7 +171,7 @@ No* a_estrela(int origem, int destino) {
   printf("Arvore de busca(g, h, f em minutos)\n");
 
   while (!fila_vazia(lista_aberta)){
-    No* estacao_atual = remover_fila(lista_aberta);
+    No *estacao_atual = remover_fila(lista_aberta);
 
     printf("Passo %d:\n", ++passo);
     imprimir_no("", estacao_atual);
@@ -198,7 +193,7 @@ No* a_estrela(int origem, int destino) {
         g_teste += MIN_BALDEACAO;
       }
 
-      No* no_vizinho = encontrar_no(lista_aberta, vizinha);
+      No *no_vizinho = encontrar_no(lista_aberta, vizinha);
 
       if (no_vizinho == NULL){
         no_vizinho = (No*)malloc(sizeof(No));
@@ -228,8 +223,8 @@ No* a_estrela(int origem, int destino) {
 }
 
 void busca(int origem, int destino) {
-  No* no_destino = a_estrela(origem, destino);
-  No* ind = no_destino;
+  No *no_destino = a_estrela(origem, destino);
+  No *ind = no_destino;
 
   int estacoes[TAM];
   int qtd_estacoes = 0;
@@ -247,7 +242,7 @@ void busca(int origem, int destino) {
     ind = ind->raiz;
   }
 
-  int minutos = no_destino->g;
+  int minutos = (int)(no_destino->g + 0.5f);
 
   printf("Rota       : ");
   for (int i = qtd_estacoes - 1; i > 0; --i) {
