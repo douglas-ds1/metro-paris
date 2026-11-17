@@ -78,11 +78,11 @@ int esta_na_lista(int n, int *lista, int tam) {
   }
   return 0;
 }
-
+/*
 float valor_matriz(const float matriz[TAM][TAM], int a, int b) {
   return matriz[a][b];
 }
-
+*/
 Fila* criar_fila() {
   Fila *fila = (Fila*)malloc(sizeof(Fila));
   fila->inicio = (cel)malloc(sizeof(No));
@@ -147,6 +147,15 @@ No* encontrar_no(Fila *fila, int estacao) {
   return NULL;
 }
 
+void definir_no(No* no, int estacao, int linha, float g, float h, No* raiz) {
+  no->estacao = estacao;
+  no->linha = linha;
+  no->f = g + h;
+  no->g = g;
+  no->h = h;
+  no->raiz = raiz;
+}
+
 int esta_na_fila(Fila *fila, int estacao) {
   return encontrar_no(fila, estacao) != NULL;
 }
@@ -156,7 +165,8 @@ void imprimir_no(const char *n_estacao, No *no) {
 }
 
 No* a_estrela(int origem, int destino) {
-  float h = valor_matriz(distancias_diretas, origem, destino) * MIN_POR_KM;
+  // float h = valor_matriz(distancias_diretas, origem, destino) * MIN_POR_KM;
+  float h = distancias_diretas[origem][destino] * MIN_POR_KM;
 
   No *estacao_origem = (No*)malloc(sizeof(No));
   *estacao_origem = (No){origem, 0, h, 0, h, NULL, NULL}; //preenche os campos do no de uma vez
@@ -188,7 +198,8 @@ No* a_estrela(int origem, int destino) {
       if (!nova_linha) continue;
       if (esta_na_lista(vizinha, lista_fechada, tam_lista_fechada)) continue;
 
-      float g_teste = estacao_atual->g + valor_matriz(distancias_reais, estacao_atual->estacao, vizinha) * MIN_POR_KM;
+      // float g_teste = estacao_atual->g + valor_matriz(distancias_reais, estacao_atual->estacao, vizinha) * MIN_POR_KM;
+      float g_teste = estacao_atual->g + distancias_reais[estacao_atual->estacao][vizinha] * MIN_POR_KM;
       if (estacao_atual->linha != 0 && estacao_atual->linha != nova_linha) {
         g_teste += MIN_BALDEACAO;
       }
@@ -196,6 +207,7 @@ No* a_estrela(int origem, int destino) {
       No *no_vizinho = encontrar_no(lista_aberta, vizinha);
 
       if (no_vizinho == NULL){
+        /*
         no_vizinho = (No*)malloc(sizeof(No));
         no_vizinho->estacao = vizinha;
         no_vizinho->linha = nova_linha;
@@ -204,14 +216,22 @@ No* a_estrela(int origem, int destino) {
         no_vizinho->h = valor_matriz(distancias_diretas, vizinha, destino) * MIN_POR_KM;
         no_vizinho->f = no_vizinho->g + no_vizinho->h; // f = g + h
         inserir_fila(lista_aberta, no_vizinho);
+        */
+        no_vizinho = (No*)malloc(sizeof(No));
+        definir_no(no_vizinho, vizinha, nova_linha, g_teste, distancias_diretas[vizinha][destino] * MIN_POR_KM, estacao_atual);
+        inserir_fila(lista_aberta, no_vizinho);
         imprimir_no("gera:", no_vizinho);
 
       } else if (g_teste < no_vizinho->g){
         remover_no_fila(lista_aberta, no_vizinho);
+        /*
         no_vizinho->linha = nova_linha;
         no_vizinho->raiz = estacao_atual;
         no_vizinho->g = g_teste;
         no_vizinho->f = no_vizinho->g + no_vizinho->h;
+        */
+        definir_no(no_vizinho, no_vizinho->estacao, nova_linha, g_teste, no_vizinho->h, estacao_atual);
+
         inserir_fila(lista_aberta, no_vizinho);
         imprimir_no("atualiza:", no_vizinho);
       }
