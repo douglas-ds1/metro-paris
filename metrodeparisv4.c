@@ -5,6 +5,8 @@
 #define MIN_POR_KM 2
 #define MIN_BALDEACAO 4
 
+static const char *nome_linha[5] = {"-", "azul", "amarela", "vermelha", "verde"};
+
 static const int linhas[TAM][TAM] = {
   {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {1, 0, 1, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0},
@@ -78,11 +80,7 @@ int esta_na_lista(int n, int *lista, int tam) {
   }
   return 0;
 }
-/*
-float valor_matriz(const float matriz[TAM][TAM], int a, int b) {
-  return matriz[a][b];
-}
-*/
+
 Fila* criar_fila() {
   Fila *fila = (Fila*)malloc(sizeof(Fila));
   fila->inicio = (cel)malloc(sizeof(No));
@@ -165,7 +163,6 @@ void imprimir_no(const char *n_estacao, No *no) {
 }
 
 No* a_estrela(int origem, int destino) {
-  // float h = valor_matriz(distancias_diretas, origem, destino) * MIN_POR_KM;
   float h = distancias_diretas[origem][destino] * MIN_POR_KM;
 
   No *estacao_origem = (No*)malloc(sizeof(No));
@@ -176,18 +173,11 @@ No* a_estrela(int origem, int destino) {
 
   int lista_fechada[TAM]; //estacoes ja analisadas
   int tam_lista_fechada = 0;
-  int passo = 0;
-
-  printf("Arvore de busca(g, h, f em minutos)\n");
 
   while (!fila_vazia(lista_aberta)){
     No *estacao_atual = remover_fila(lista_aberta);
 
-    printf("Passo %d:\n", ++passo);
-    imprimir_no("", estacao_atual);
-
     if (estacao_atual->estacao == destino) {
-      printf("Destino alcancado.\n\n");
       return estacao_atual;
     }
 
@@ -207,33 +197,15 @@ No* a_estrela(int origem, int destino) {
       No *no_vizinho = encontrar_no(lista_aberta, vizinha);
 
       if (no_vizinho == NULL){
-        /*
-        no_vizinho = (No*)malloc(sizeof(No));
-        no_vizinho->estacao = vizinha;
-        no_vizinho->linha = nova_linha;
-        no_vizinho->raiz = estacao_atual;
-        no_vizinho->g = g_teste;
-        no_vizinho->h = valor_matriz(distancias_diretas, vizinha, destino) * MIN_POR_KM;
-        no_vizinho->f = no_vizinho->g + no_vizinho->h; // f = g + h
-        inserir_fila(lista_aberta, no_vizinho);
-        */
         no_vizinho = (No*)malloc(sizeof(No));
         definir_no(no_vizinho, vizinha, nova_linha, g_teste, distancias_diretas[vizinha][destino] * MIN_POR_KM, estacao_atual);
         inserir_fila(lista_aberta, no_vizinho);
-        imprimir_no("gera:", no_vizinho);
 
       } else if (g_teste < no_vizinho->g){
         remover_no_fila(lista_aberta, no_vizinho);
-        /*
-        no_vizinho->linha = nova_linha;
-        no_vizinho->raiz = estacao_atual;
-        no_vizinho->g = g_teste;
-        no_vizinho->f = no_vizinho->g + no_vizinho->h;
-        */
         definir_no(no_vizinho, no_vizinho->estacao, nova_linha, g_teste, no_vizinho->h, estacao_atual);
 
         inserir_fila(lista_aberta, no_vizinho);
-        imprimir_no("atualiza:", no_vizinho);
       }
     }
   }
@@ -248,42 +220,45 @@ void busca(int origem, int destino) {
 
   int estacoes[TAM];
   int qtd_estacoes = 0;
-  int baldeacoes = 0;
-  int linha_atual = 0;
 
   while (ind != NULL) {
     estacoes[qtd_estacoes++] = ind->estacao;
-
-    if (ind->raiz != NULL) {
-      int nova_linha = linhas[ind->estacao][ind->raiz->estacao];
-      if (linha_atual != 0 && linha_atual != nova_linha) ++baldeacoes;
-      linha_atual = nova_linha;
-    }
     ind = ind->raiz;
   }
 
-  int minutos = (int)(no_destino->g + 0.5f);
-
-  printf("Rota       : ");
+  printf("\nMelhor percurso:\n");
+  int linha_anterior = 0;
   for (int i = qtd_estacoes - 1; i > 0; --i) {
-    printf("E%d -> ", estacoes[i] + 1);
+    int a = estacoes[i];
+    int b = estacoes[i - 1];
+    int linha_trecho = linhas[a][b];
+
+    printf("Estacao %d -> Estacao %d  Tempo: %.1f min  (linha %s)\n",
+           a + 1, b + 1, distancias_reais[a][b] * MIN_POR_KM, nome_linha[linha_trecho]);
+
+    if (linha_anterior != 0 && linha_trecho != linha_anterior) {
+      printf("   (troca de linha: +%d min)\n", MIN_BALDEACAO);
+    }
+    linha_anterior = linha_trecho;
   }
-  printf("E%d\n", estacoes[0] + 1);
-  printf("Baldeacoes : %d\n", baldeacoes);
-  printf("Tempo total: %d horas e %d minutos\n", minutos / 60, minutos % 60);
+
+  int minutos = (int)(no_destino->g);
+  printf("\nTempo Total: %d %s e %d %s\n",
+         minutos / 60, (minutos / 60 == 1) ? "hora" : "horas",
+         minutos % 60, (minutos % 60 == 1) ? "minuto" : "minutos");
 }
 
 int main() {
   int origem, destino;
 
-  printf("Origem (1-%d): ", TAM);
+  printf("Estacao de origem (1-%d): ", TAM);
   scanf("%d", &origem);
 
-  printf("Destino (1-%d): ", TAM);
+  printf("Estacao de destino (1-%d): ", TAM);
   scanf("%d", &destino);
 
   if(origem < 1 || origem > TAM || destino < 1 || destino > TAM) {
-    printf("Estacao invalida. Use valores entre 1 e %d.\n", TAM);
+    printf("Estacao invalida.\n");
     return 1;
   }
 
